@@ -1,0 +1,125 @@
+@startuml
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam usecaseBackgroundColor #F8F9FF
+skinparam usecaseBorderColor #4455AA
+skinparam actorBackgroundColor #D6EAF8
+skinparam actorBorderColor #1A5276
+left to right direction
+
+title DeskyWork - Partie 3B : Guests, Documents, RGPD, Super Admin
+
+actor "Visiteur"    as V
+actor "Membre"      as M
+actor "Staff"       as S
+actor "Admin"       as A
+actor "Super Admin" as SA
+
+M --|> V
+S --|> M
+A --|> S
+
+' ─── MODULE H : GUESTS ─────────────────────────
+package "Visiteurs Invites (Module H)" {
+  usecase "Reserver sans compte (guest)"     as H1
+  usecase "S'inscrire formation sans compte" as H2
+  usecase "Annuler reservation via token"    as H3
+  usecase "Lister les guests"                as H4
+  usecase "Convertir guest en membre"        as H5
+}
+
+V --> H1
+V --> H2
+V --> H3
+A --> H4
+A --> H5
+
+' ─── MODULE K : DOCUMENTS ──────────────────────
+package "Documents (Module K)" {
+  usecase "Consulter ses documents"          as D1
+  usecase "Uploader un document"             as D2
+  usecase "Accepter reglement interieur"     as D3
+  usecase "Signer document via lien public"  as D4
+  usecase "Voir documents d'un membre"       as D5
+  usecase "Envoyer lien de signature"        as D6
+  usecase "Gerer modeles de documents"       as D7
+}
+
+M --> D1
+M --> D2
+M --> D3
+V --> D4
+A --> D5
+A --> D6
+A --> D7
+
+' ─── MODULE L : RGPD ───────────────────────────
+package "RGPD (Module L)" {
+  usecase "Demander export de ses donnees"   as RG1
+  usecase "Demander suppression du compte"   as RG2
+  usecase "Demander rectification"           as RG3
+  usecase "Opposition marketing"             as RG4
+  usecase "Demander portabilite des donnees" as RG5
+  usecase "Voir ses demandes RGPD"           as RG6
+  usecase "Gerer preferences marketing"      as RG7
+  usecase "Traiter demande RGPD (admin)"     as RG8
+}
+
+M --> RG1
+M --> RG2
+M --> RG3
+M --> RG4
+M --> RG5
+M --> RG6
+M --> RG7
+A --> RG8
+
+' ─── SUPER ADMIN ───────────────────────────────
+package "Super Admin - Supervision Globale" {
+  usecase "Lister tous les tenants"          as SA1
+  usecase "Voir detail d'un tenant"          as SA2
+  usecase "Creer un tenant"                  as SA3
+  usecase "Modifier un tenant"               as SA4
+  usecase "Supprimer un tenant"              as SA5
+  usecase "Onboarder un tenant"              as SA6
+  usecase "Voir stats globales de la plateforme" as SA7
+  usecase "Voir audit log des actions"       as SA8
+  usecase "Lister tous les utilisateurs"     as SA9
+  usecase "Voir resume des roles"            as SA10
+  usecase "Modifier un utilisateur"          as SA11
+  usecase "Supprimer un utilisateur"         as SA12
+  usecase "Voir reservations globales"       as SA13
+  usecase "Annuler reservation (global)"     as SA14
+  usecase "Voir paiements globaux"           as SA15
+  usecase "Voir formations globales"         as SA16
+  usecase "Annuler formation (global)"       as SA17
+  usecase "Voir espaces globaux"             as SA18
+  usecase "Activer ou desactiver espace"     as SA19
+  usecase "Rapport intelligent global"       as SA20
+  usecase "Traiter contacts landing page"    as SA21
+}
+
+SA --> SA1
+SA --> SA2
+SA --> SA3
+SA --> SA4
+SA --> SA5
+SA --> SA6
+SA --> SA7
+SA --> SA8
+SA --> SA9
+SA --> SA10
+SA --> SA11
+SA --> SA12
+SA --> SA13
+SA --> SA14
+SA --> SA15
+SA --> SA16
+SA --> SA17
+SA --> SA18
+SA --> SA19
+SA --> SA20
+SA --> SA21
+
+@enduml

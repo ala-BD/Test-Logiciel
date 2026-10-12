@@ -86,7 +86,7 @@ export default function App() {
           return parsed;
         }
       }
-    } catch (_) {}
+    } catch (_) { }
     return null;
   });
 
@@ -126,7 +126,7 @@ export default function App() {
           await supabase.auth.signOut();
           setSession(null);
         }
-      } catch (_) {}
+      } catch (_) { }
     };
 
     // Lecture synchrone : si la session vient du localStorage (déjà lue en useState),
@@ -165,7 +165,7 @@ export default function App() {
       subscription.unsubscribe();
       if (fallbackTimeout) clearTimeout(fallbackTimeout);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 

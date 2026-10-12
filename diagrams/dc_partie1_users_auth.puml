@@ -1,0 +1,115 @@
+@startuml
+skinparam classBackgroundColor #F8F9FF
+skinparam classBorderColor #4455AA
+skinparam classHeaderBackgroundColor #4455AA
+skinparam classHeaderFontColor #FFFFFF
+skinparam ArrowColor #333333
+skinparam linetype ortho
+
+title Diagramme de Classes - Partie 1 : Utilisateurs et Authentification
+
+class "tenants" {
+  +id : UUID <<PK>>
+  --
+  nom : TEXT
+  slug : TEXT <<UNIQUE>>
+  description : TEXT
+  adresse : TEXT
+  ville : TEXT
+  pays : TEXT
+  email : TEXT
+  telephone : TEXT
+  site_web : TEXT
+  logo_url : TEXT
+  cover_url : TEXT
+  latitude : NUMERIC
+  longitude : NUMERIC
+  statut : TEXT
+  plan : TEXT
+  settings : JSONB
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "profiles" {
+  +id : UUID <<PK, FK auth.users>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  nom : TEXT
+  prenom : TEXT
+  email : TEXT
+  role : TEXT
+  telephone : TEXT
+  cin : TEXT
+  type_membre : TEXT
+  statut_compte : TEXT
+  specialite : TEXT
+  biographie : TEXT
+  qr_token : TEXT
+  photo_url : TEXT
+  notes_admin : TEXT
+  marketing_email : BOOLEAN
+  marketing_sms : BOOLEAN
+  suppression_demandee : BOOLEAN
+  suppression_at : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "email_otp" {
+  +id : UUID <<PK>>
+  --
+  email : TEXT
+  code : TEXT
+  used : BOOLEAN
+  expires_at : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+}
+
+class "super_admin_audit_log" {
+  +id : UUID <<PK>>
+  --
+  user_id : UUID <<FK profiles>>
+  action : TEXT
+  target_type : TEXT
+  target_id : UUID
+  target_name : TEXT
+  details : JSONB
+  ip_address : TEXT
+  status : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+class "contacts" {
+  +id : UUID <<PK>>
+  --
+  nom : TEXT
+  prenom : TEXT
+  email : TEXT
+  telephone : TEXT
+  message : TEXT
+  statut : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+' ── RELATIONS ─────────────────────────────────
+tenants "1" --> "0..*" profiles : tenant_id
+profiles "1" --> "0..*" super_admin_audit_log : user_id
+
+note right of profiles
+  role : super_admin | admin |
+         staff | formateur |
+         member | guest
+  statut_compte : actif |
+                  suspendu | expire
+  type_membre : individuel |
+                entreprise | etudiant
+end note
+
+note right of email_otp
+  OTP 6 chiffres
+  Expire apres 10 min
+  used = true apres verification
+end note
+
+@enduml

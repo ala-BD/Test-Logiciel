@@ -1,0 +1,135 @@
+@startuml
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam usecaseBackgroundColor #F8F9FF
+skinparam usecaseBorderColor #4455AA
+skinparam actorBackgroundColor #D6EAF8
+skinparam actorBorderColor #1A5276
+left to right direction
+
+title DeskyWork - Partie 3A : Admin (KPIs, Espaces, Membres, Profil, Annulation, Multi-Sites)
+
+actor "Visiteur" as V
+actor "Membre"   as M
+actor "Staff"    as S
+actor "Admin"    as A
+
+M --|> V
+S --|> M
+A --|> S
+
+' ─── KPIs ──────────────────────────────────────
+package "Tableau de Bord Admin et KPIs" {
+  usecase "Consulter KPIs (CA, occupation)" as K1
+  usecase "Voir graphique evolution CA"      as K2
+  usecase "Generer rapport intelligent"      as K3
+  usecase "Consulter agenda du jour"         as K4
+  usecase "Exporter donnees Excel"           as K5
+}
+
+A --> K1
+A --> K2
+A --> K3
+A --> K4
+A --> K5
+S --> K4
+
+' ─── ESPACES ───────────────────────────────────
+package "Gestion des Espaces" {
+  usecase "Lister les espaces"               as E1
+  usecase "Creer un espace"                  as E2
+  usecase "Modifier un espace"               as E3
+  usecase "Supprimer un espace"              as E4
+  usecase "Uploader photo d'un espace"       as E5
+  usecase "Lister espaces de formation"      as E6
+}
+
+A --> E2
+A --> E3
+A --> E4
+A --> E5
+M --> E1
+M --> E6
+V --> E1
+
+' ─── MEMBRES ───────────────────────────────────
+package "Gestion des Membres" {
+  usecase "Lister les membres du tenant"     as MB1
+  usecase "Voir profil d'un membre"          as MB2
+  usecase "Activer ou suspendre un compte"   as MB3
+  usecase "Approuver compte en attente"      as MB4
+  usecase "Modifier un membre"               as MB5
+  usecase "Modifier son propre profil"       as MB6
+  usecase "Envoyer email de bienvenue"       as MB7
+  usecase "Obtenir son QR code"              as MB8
+}
+
+A --> MB1
+A --> MB2
+A --> MB3
+A --> MB4
+A --> MB5
+M --> MB6
+M --> MB7
+M --> MB8
+S --> MB1
+S --> MB2
+
+' ─── PROFIL COWORKING ──────────────────────────
+package "Profil Coworking et Onboarding" {
+  usecase "Consulter profil du tenant"       as CP1
+  usecase "Modifier profil du coworking"     as CP2
+  usecase "Completer onboarding guide"       as CP3
+  usecase "Uploader logo et photos"          as CP4
+  usecase "Voir liste des coworkings"        as CP5
+}
+
+A --> CP1
+A --> CP2
+A --> CP3
+A --> CP4
+M --> CP5
+V --> CP5
+
+' ─── POLITIQUE ANNULATION ──────────────────────
+package "Politique Annulation et Credits" {
+  usecase "Configurer politique globale"     as AC1
+  usecase "Configurer politique par espace"  as AC2
+  usecase "Marquer no-show"                  as AC3
+  usecase "Consulter ses credits"            as AC4
+  usecase "Ajouter credit portefeuille"      as AC5
+}
+
+A --> AC1
+A --> AC2
+A --> AC3
+A --> AC5
+M --> AC4
+AC3 ..> AC5 : <<extend>>
+
+' ─── MULTI-SITES ───────────────────────────────
+package "Multi-Sites (Module N)" {
+  usecase "Lister les sites"                 as NS1
+  usecase "Creer un site / antenne"          as NS2
+  usecase "Modifier un site"                 as NS3
+  usecase "Supprimer un site"                as NS4
+  usecase "Voir membres d'un site"           as NS5
+  usecase "Autoriser membre sur un site"     as NS6
+  usecase "Retirer acces d'un membre"        as NS7
+  usecase "KPIs d'un site"                   as NS8
+  usecase "KPIs globaux multi-sites"         as NS9
+}
+
+A --> NS1
+A --> NS2
+A --> NS3
+A --> NS4
+A --> NS5
+A --> NS6
+A --> NS7
+A --> NS8
+A --> NS9
+M --> NS1
+
+@enduml

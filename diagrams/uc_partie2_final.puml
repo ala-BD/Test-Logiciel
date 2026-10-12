@@ -1,0 +1,160 @@
+@startuml
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam usecaseBackgroundColor #F8F9FF
+skinparam usecaseBorderColor #4455AA
+skinparam actorBackgroundColor #D6EAF8
+skinparam actorBorderColor #1A5276
+skinparam usecase {
+  BackgroundColor<<auto>> #FFFACD
+  BorderColor<<auto>> #C9A800
+}
+left to right direction
+
+title DeskyWork - Partie 2 : Paiements, Formations, Messagerie, Notifications
+
+' ─── ACTEURS (humains uniquement) ──────────────
+actor "Membre"    as M
+actor "Staff"     as S
+actor "Admin"     as A
+actor "Formateur" as F
+
+S --|> M
+A --|> S
+F --|> M
+
+' ─── PAIEMENTS ─────────────────────────────────
+' payments.routes.js | paymentsController.js
+' stripeService.js | generateReceipt.js
+' cron/paymentReminders.js (tous les jours a 09h00)
+package "Paiements" {
+  usecase "Payer en ligne (Stripe Checkout)"    as P1
+  usecase "Verifier paiement apres Stripe"      as P2
+  usecase "Enregistrer paiement sur place"      as P4
+  usecase "Consulter ses paiements"             as P5
+  usecase "Telecharger recu PDF"                as P6
+  usecase "Generer recu PDF (auto)"             as P7
+  usecase "Voir paiements en attente"           as P8
+  usecase "Mettre a jour un paiement"           as P9
+  usecase "Rembourser un paiement"              as P10
+  usecase "Relance impayes J+3 J+7 - 09h00"    as P11 <<auto>>
+  usecase "Suspension compte a J+15 - 09h00"   as P12 <<auto>>
+}
+
+M  --> P1
+P1 ..> P2 : <<include>>
+P2 ..> P7 : <<include>>
+M  --> P5
+M  --> P6
+S  --> P4
+P4 ..> P7 : <<include>>
+A  --> P8
+A  --> P9
+A  --> P10
+P9 ..> P7 : <<extend>>
+P10 ..> P7 : <<extend>>
+
+' ─── FORMATIONS ────────────────────────────────
+' formations.routes.js | formationsController.js
+' inscriptions.routes.js | inscriptionsController.js
+' formateurs.routes.js | formateursController.js
+' cron/formationReminders.js (a 18h30)
+package "Formations et Workshops" {
+  usecase "Consulter catalogue formations"      as G1
+  usecase "Voir detail d'une formation"         as G2
+  usecase "S'inscrire a une formation"          as G3
+  usecase "Payer inscription formation"         as G4
+  usecase "Annuler son inscription"             as G5
+  usecase "Creer une formation"                 as G6
+  usecase "Modifier ou annuler formation"       as G7
+  usecase "Gerer les inscriptions"              as G8
+  usecase "Marquer presence (emargement)"       as G9
+  usecase "Valider ou rejeter une formation"    as G10
+  usecase "Ajouter remuneration formateur"      as G11
+  usecase "Consulter ses remunerations"         as G12
+  usecase "Rappel formation J-1 - 18h30"       as G13 <<auto>>
+}
+
+M  --> G1
+M  --> G2
+M  --> G3
+G3 ..> G4 : <<extend>>
+M  --> G5
+F  --> G6
+F  --> G7
+F  --> G8
+F  --> G9
+F  --> G12
+A  --> G10
+A  --> G11
+A  --> G8
+A  --> G9
+
+' ─── ESPACE FORMATEUR ──────────────────────────
+' formateurs.routes.js | TrainerDashboard.jsx
+' TrainerPlanning.jsx | TrainerProfile.jsx
+package "Espace Formateur" {
+  usecase "Tableau de bord formateur"           as TR1
+  usecase "Voir son planning"                   as TR2
+  usecase "Modifier profil formateur"           as TR3
+  usecase "Voir coworkings partenaires"         as TR4
+  usecase "Lister les formateurs"               as TR5
+  usecase "Creer profil formateur"              as TR6
+}
+
+F  --> TR1
+F  --> TR2
+F  --> TR3
+F  --> TR4
+A  --> TR5
+A  --> TR6
+
+' ─── MESSAGERIE ────────────────────────────────
+' conversations.routes.js | conversationsController.js
+' socketService.js (Socket.io temps reel)
+package "Messagerie Temps Reel (Socket.io)" {
+  usecase "Voir ses conversations"              as MS1
+  usecase "Creer une conversation support"      as MS2
+  usecase "Envoyer un message"                  as MS3
+  usecase "Lire les messages"                   as MS4
+  usecase "Marquer messages comme lus"          as MS5
+  usecase "Voir compteur messages non lus"      as MS6
+  usecase "Voir equipe du coworking"            as MS7
+  usecase "Gerer toutes les conversations"      as MS8
+  usecase "Initier conv. avec un membre"        as MS9
+}
+
+M  --> MS1
+M  --> MS2
+M  --> MS3
+M  --> MS4
+M  --> MS5
+M  --> MS6
+M  --> MS7
+F  --> MS2
+F  --> MS3
+A  --> MS8
+A  --> MS9
+A  --> MS3
+
+' ─── NOTIFICATIONS ─────────────────────────────
+' notificationService.js | whatsappService.js
+' sendEmail.js | Supabase Realtime
+' (Email et WhatsApp sont des canaux internes, pas des acteurs)
+package "Notifications" {
+  usecase "Recevoir notification dashboard"     as N1
+  usecase "Marquer notification comme lue"      as N2
+  usecase "Configurer preferences notif."       as N3
+  usecase "Voir toutes ses notifications"       as N4
+  usecase "Envoi email transactionnel (auto)"   as N5 <<auto>>
+  usecase "Envoi notification WhatsApp (auto)"  as N6 <<auto>>
+}
+
+M  --> N1
+M  --> N2
+M  --> N3
+M  --> N4
+A  --> N4
+
+@enduml

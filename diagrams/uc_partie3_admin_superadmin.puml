@@ -1,0 +1,184 @@
+@startuml UC_Partie3_Admin_SuperAdmin
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #FEFEFE
+skinparam usecaseBorderColor #555555
+skinparam actorBackgroundColor #DDEEFF
+skinparam ArrowColor #444444
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #F9A825
+left to right direction
+
+title DeskyWork — Partie 3 : Admin KPIs, Documents, RGPD, Multi-Sites, Super Admin
+
+actor "Visiteur" as V
+actor "Membre" as M
+actor "Staff" as S
+actor "Admin" as A
+actor "Super Admin" as SA
+
+S --|> M
+A --|> S
+
+' ── TABLEAU DE BORD ADMIN / KPIs ─────────────────
+package "Tableau de Bord Admin & KPIs" {
+  usecase "Consulter KPIs (CA, occupation...)" as K1
+  usecase "Visualiser graphiques d'activité" as K2
+  usecase "Générer rapport intelligent auto." as K3
+  usecase "Consulter agenda du jour" as K4
+  usecase "Exporter données (Excel)" as K5
+}
+
+A --> K1
+A --> K2
+A --> K3
+A --> K4
+A --> K5
+S --> K4
+
+' ── GESTION ESPACES ──────────────────────────────
+package "Gestion des Espaces" {
+  usecase "Créer un espace" as E1
+  usecase "Modifier un espace" as E2
+  usecase "Désactiver un espace" as E3
+  usecase "Gérer les photos d'un espace" as E4
+  usecase "Consulter espaces disponibles" as E5
+}
+
+A --> E1
+A --> E2
+A --> E3
+A --> E4
+M --> E5
+V --> E5
+
+' ── GESTION MEMBRES ──────────────────────────────
+package "Gestion des Membres" {
+  usecase "Lister les membres" as MB1
+  usecase "Voir profil d'un membre" as MB2
+  usecase "Activer / Suspendre un compte" as MB3
+  usecase "Supprimer un compte" as MB4
+  usecase "Modifier son profil" as MB5
+}
+
+A --> MB1
+A --> MB2
+A --> MB3
+A --> MB4
+M --> MB5
+S --> MB1
+S --> MB2
+
+' ── PROFIL COWORKING & MULTI-SITES ───────────────
+package "Profil Coworking & Multi-Sites" {
+  usecase "Gérer profil du coworking" as CP1
+  usecase "Onboarding guidé" as CP2
+  usecase "Créer un site / antenne" as CP3
+  usecase "Gérer accès membre par site" as CP4
+  usecase "Voir ses sites accessibles" as CP5
+}
+
+A --> CP1
+A --> CP2
+A --> CP3
+A --> CP4
+M --> CP5
+
+' ── ANNULATION & CRÉDITS ─────────────────────────
+package "Politique d'Annulation & Crédits" {
+  usecase "Configurer politique annulation globale" as AC1
+  usecase "Configurer politique par espace" as AC2
+  usecase "Appliquer pénalité d'annulation" as AC3
+  usecase "Générer crédit portefeuille" as AC4
+  usecase "Consulter ses crédits" as AC5
+}
+
+A --> AC1
+A --> AC2
+AC3 ..> AC4 : <<extend>>
+M --> AC5
+
+' ── ABONNEMENTS — rappels automatiques ──────────
+package "Rappels Abonnements" {
+  usecase "Rappel expiration J-7" as RB1
+  usecase "Rappel expiration J-3" as RB2
+  usecase "Expiration + suspension auto." as RB3
+}
+
+note bottom of RB1
+  <<scheduled>>
+  Tous les jours à 10h00
+end note
+
+note bottom of RB2
+  <<scheduled>>
+  Tous les jours à 10h30
+end note
+
+note bottom of RB3
+  <<scheduled>>
+  Tous les jours à 08h00
+end note
+
+' ── DOCUMENTS ────────────────────────────────────
+package "Documents" {
+  usecase "Consulter ses documents" as D1
+  usecase "Signer document électroniquement" as D2
+  usecase "Télécharger un document" as D3
+  usecase "Gérer modèles de documents" as D4
+  usecase "Signer via lien public" as D5
+}
+
+M --> D1
+M --> D2
+M --> D3
+A --> D4
+V --> D5
+
+' ── RGPD ─────────────────────────────────────────
+package "RGPD" {
+  usecase "Demander export de ses données" as RG1
+  usecase "Demander suppression du compte" as RG2
+  usecase "Demander rectification" as RG3
+  usecase "Traiter une demande RGPD" as RG4
+}
+
+M --> RG1
+M --> RG2
+M --> RG3
+A --> RG4
+
+' ── SUPER ADMIN ──────────────────────────────────
+package "Super Admin — Supervision Globale" {
+  usecase "Créer un tenant (coworking)" as SA1
+  usecase "Modifier / Suspendre un tenant" as SA2
+  usecase "Lister tous les tenants" as SA3
+  usecase "Approuver compte admin coworking" as SA4
+  usecase "Gérer tous les utilisateurs" as SA5
+  usecase "Voir réservations globales" as SA6
+  usecase "Voir paiements globaux" as SA7
+  usecase "Voir formations globales" as SA8
+  usecase "Gérer espaces globaux" as SA9
+  usecase "Facturation B2B (MRR)" as SA10
+  usecase "KPIs plateforme + rapport global" as SA11
+  usecase "Audit log des actions" as SA12
+  usecase "Traiter demandes de contact" as SA13
+  usecase "Monitoring plateforme" as SA14
+}
+
+SA --> SA1
+SA --> SA2
+SA --> SA3
+SA --> SA4
+SA --> SA5
+SA --> SA6
+SA --> SA7
+SA --> SA8
+SA --> SA9
+SA --> SA10
+SA --> SA11
+SA --> SA12
+SA --> SA13
+SA --> SA14
+
+@enduml

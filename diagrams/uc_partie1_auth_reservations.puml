@@ -1,0 +1,178 @@
+@startuml UC_Partie1_Auth_Reservations
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #FEFEFE
+skinparam usecaseBorderColor #555555
+skinparam actorBackgroundColor #DDEEFF
+skinparam ArrowColor #444444
+skinparam usecase {
+  BackgroundColor<<scheduled>> #FFF9C4
+  BorderColor<<scheduled>> #F9A825
+  FontStyle<<scheduled>> italic
+}
+left to right direction
+
+title DeskyWork — Partie 1 : Authentification, Réservations, Sessions, Abonnements
+
+' ════════════════════════════════
+' ACTEURS
+' ════════════════════════════════
+actor "Visiteur\n(non connecté)" as V
+actor "Membre" as M
+actor "Staff" as S
+actor "Admin\nCoworking" as A
+
+M --|> V
+S --|> M
+A --|> S
+
+' ════════════════════════════════
+' AUTHENTIFICATION
+' Source : otp.routes.js · password.routes.js
+'          middleware/authenticate.js
+'          Supabase Auth (frontend)
+' ════════════════════════════════
+package "Authentification" {
+  usecase "S'inscrire\n(email + OTP)" as R1
+  usecase "Vérifier le code OTP\n(6 chiffres · expire 10 min)" as R2
+  usecase "Se connecter\n(email + mot de passe)" as R3
+  usecase "Se connecter via\nGoogle OAuth" as R4
+  usecase "Se connecter via\nLinkedIn OAuth" as R5
+  usecase "Réinitialiser\nle mot de passe" as R6
+  usecase "Se déconnecter" as R7
+  usecase "Compte en attente\nd'approbation\n[rôle admin uniquement]" as R8
+  usecase "Accès bloqué :\ncompte suspendu\nou expiré" as R9
+}
+
+V --> R1
+R1 ..> R2 : <<include>>
+R1 ..> R8 : <<extend>>
+V --> R3
+V --> R4
+V --> R5
+V --> R6
+M --> R7
+R3 ..> R9 : <<extend>>
+
+' ════════════════════════════════
+' LANDING PAGE
+' Source : Landing.jsx · CoworkingDetail.jsx
+'          contact.routes.js · modulesHJKLN (guest)
+' ════════════════════════════════
+package "Landing Page (Public)" {
+  usecase "Consulter\nla page d'accueil" as L1
+  usecase "Voir la fiche\nd'un coworking" as L2
+  usecase "Envoyer un message\nde contact" as L3
+  usecase "Réserver en tant\nqu'invité (sans compte)" as L4
+}
+
+V --> L1
+V --> L2
+V --> L3
+V --> L4
+
+' ════════════════════════════════
+' RÉSERVATIONS
+' Source : bookings.routes.js · bookingsController.js
+'          BookingStep1/2/3.jsx · QrCodeView.jsx
+' ════════════════════════════════
+package "Réservations" {
+  usecase "Consulter le calendrier\nde disponibilité" as B0
+  usecase "Étape 1 : Choisir\nespace + date" as B1
+  usecase "Vérifier la disponibilité\n(anti-chevauchement SQL)" as B2
+  usecase "Étape 2 : Choisir\nmode de paiement" as B3
+  usecase "Étape 3 : Confirmer\nla réservation" as B4
+  usecase "Recevoir le QR\ncode d'accès" as B5
+  usecase "Consulter ses\nréservations" as B6
+  usecase "Annuler une réservation\n(avec calcul pénalité)" as B7
+  usecase "Modifier les dates\nd'une réservation" as B8
+  usecase "Rappel réservation J-1\n«scheduled» à 18h00" as B9 <<scheduled>>
+}
+
+M --> B0
+M --> B1
+B1 ..> B2 : <<include>>
+B1 ..> B3 : <<include>>
+B3 ..> B4 : <<include>>
+B4 ..> B5 : <<include>>
+M --> B6
+M --> B7
+M --> B8
+A --> B7
+A --> B8
+
+' ════════════════════════════════
+' GESTION RÉSERVATIONS — ADMIN / STAFF
+' Source : bookingsController.js (updateBooking, listBookings,
+'          getBookingsOccupation) · AdminReservations.jsx
+' ════════════════════════════════
+package "Gestion Réservations (Admin / Staff)" {
+  usecase "Confirmer une réservation\n(notifie le membre)" as BA1
+  usecase "Refuser / Annuler\nune réservation" as BA2
+  usecase "Voir toutes les\nréservations du tenant" as BA3
+  usecase "Créer une réservation\npour un membre" as BA4
+  usecase "Consulter le taux\nd'occupation par espace" as BA5
+}
+
+A --> BA1
+A --> BA2
+A --> BA3
+A --> BA4
+A --> BA5
+
+' ════════════════════════════════
+' SESSIONS & CHECK-IN
+' Source : sessions.routes.js · sessionsController.js
+'          cron/reservationReminders.js (CRON 2,3,4)
+'          socketService.js (temps réel)
+' ════════════════════════════════
+package "Sessions & Check-in Temps Réel" {
+  usecase "Scanner le QR code\ndu membre" as SC1
+  usecase "Démarrer la session\n(check-in)" as SC2
+  usecase "Terminer la session\n(check-out)" as SC3
+  usecase "Consulter ses sessions\n(historique + session active)" as SC4
+  usecase "Lister toutes les sessions\n(admin / staff)" as SC5
+  usecase "Alerte 15 min avant\nfin de session\n«scheduled» toutes les 5 min" as SC6 <<scheduled>>
+  usecase "Clôturer automatiquement\nles sessions expirées\n«scheduled» toutes les 2 min" as SC7 <<scheduled>>
+  usecase "Détecter un dépassement\nhoraire et alerter\n«scheduled» toutes les 5 min" as SC8 <<scheduled>>
+}
+
+S --> SC1
+SC1 ..> SC2 : <<include>>
+S --> SC3
+S --> SC5
+M --> SC4
+
+' ════════════════════════════════
+' ABONNEMENTS & TARIFICATION
+' Source : subscriptions.routes.js · subscriptionsController.js
+'          pricing.routes.js · pricingController.js
+'          cron/subscriptionReminders.js (CRON 1,2,3,4)
+' ════════════════════════════════
+package "Abonnements & Tarification" {
+  usecase "Souscrire un abonnement\n(self-service)" as AB1
+  usecase "Appliquer un code promo\nlors de la souscription" as AB2
+  usecase "Activer le renouvellement\nautomatique" as AB3
+  usecase "Consulter son\nabonnement actif" as AB4
+  usecase "Consulter l'historique\nde ses abonnements" as AB5
+  usecase "Créer un abonnement\npour un membre (admin)" as AB6
+  usecase "Modifier / Activer /\nSuspendre un abonnement" as AB7
+  usecase "Configurer la\ngrille tarifaire" as AB8
+  usecase "Créer et gérer\nles codes promo" as AB9
+  usecase "Renouvellement automatique\ndes abonnements\n«scheduled» à 06h00" as AB10 <<scheduled>>
+  usecase "Expiration auto. +\nsuspension du compte\n«scheduled» à 08h00" as AB11 <<scheduled>>
+  usecase "Rappel expiration J-7\n«scheduled» à 10h00" as AB12 <<scheduled>>
+  usecase "Rappel expiration J-3\n«scheduled» à 10h30" as AB13 <<scheduled>>
+}
+
+M --> AB1
+AB1 ..> AB2 : <<extend>>
+AB1 ..> AB3 : <<extend>>
+M --> AB4
+M --> AB5
+A --> AB6
+A --> AB7
+A --> AB8
+A --> AB9
+
+@enduml

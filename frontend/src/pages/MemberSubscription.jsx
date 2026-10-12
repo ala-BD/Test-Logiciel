@@ -294,9 +294,7 @@ export default function MemberSubscription({ session }) {
               </h2>
               {tarifs.length === 0 ? (
                 <p className="text-sm text-on-surface-variant">
-                  Tarifs non configurés. Exécutez la migration{' '}
-                  <code className="text-xs bg-surface-container-high px-1 rounded">s2_dev1_tarifs_promo.sql</code>{' '}
-                  dans Supabase.
+                  Tarifs non configurés.
                 </p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4">

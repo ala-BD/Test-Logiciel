@@ -1,0 +1,443 @@
+@startuml DeskyWork_UseCases_Global
+
+' ═══════════════════════════════════════════════════════════
+' DESKYWORK — Diagramme de Cas d'Utilisation Global
+' Plateforme SaaS de Gestion d'Espaces de Coworking
+' ═══════════════════════════════════════════════════════════
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #FEFEFE
+skinparam usecaseBorderColor #555555
+skinparam actorBackgroundColor #DDEEFF
+skinparam actorBorderColor #3366AA
+skinparam packageBackgroundColor #F8F8F8
+skinparam packageBorderColor #AAAAAA
+skinparam ArrowColor #555555
+skinparam linetype ortho
+
+' ═══════════════════════════════════════════
+' ACTEURS
+' ═══════════════════════════════════════════
+actor "Visiteur\n(non connecté)" as Visiteur #LightYellow
+actor "Membre" as Membre #LightBlue
+actor "Staff" as Staff #LightGreen
+actor "Admin\nCoworking" as Admin #Orange
+actor "Formateur" as Formateur #Plum
+actor "Super Admin" as SuperAdmin #Salmon
+actor "Système\n(CRON)" as Cron #LightGray
+actor "Stripe" as Stripe #LightCyan
+actor "Service Email\n(SMTP)" as Email #LightPink
+actor "Service WhatsApp" as WhatsApp #PaleGreen
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE AUTH — AUTHENTIFICATION
+' ═══════════════════════════════════════════════════════════════════
+package "🔐 Authentification" {
+  usecase "S'inscrire par email\n+ vérification OTP" as UC_Register
+  usecase "Se connecter\n(email + mot de passe)" as UC_Login
+  usecase "Se connecter via\nGoogle OAuth" as UC_GoogleOAuth
+  usecase "Se connecter via\nLinkedIn OAuth" as UC_LinkedInOAuth
+  usecase "Réinitialiser\nle mot de passe" as UC_ResetPwd
+  usecase "Se déconnecter" as UC_Logout
+  usecase "Vérifier le code OTP\n(inscription email)" as UC_VerifyOTP
+}
+
+Visiteur --> UC_Register
+Visiteur --> UC_Login
+Visiteur --> UC_GoogleOAuth
+Visiteur --> UC_LinkedInOAuth
+Visiteur --> UC_ResetPwd
+Membre --> UC_Logout
+Admin --> UC_Logout
+Formateur --> UC_Logout
+Staff --> UC_Logout
+UC_Register ..> UC_VerifyOTP : <<include>>
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE LANDING — PAGE PUBLIQUE
+' ═══════════════════════════════════════════════════════════════════
+package "🌐 Landing Page (Public)" {
+  usecase "Consulter la\npage d'accueil" as UC_Landing
+  usecase "Consulter la fiche\nd'un coworking" as UC_CoworkingDetail
+  usecase "Envoyer un message\nde contact" as UC_Contact
+  usecase "Réserver en tant\nqu'invité (sans compte)" as UC_GuestBooking
+}
+
+Visiteur --> UC_Landing
+Visiteur --> UC_CoworkingDetail
+Visiteur --> UC_Contact
+Visiteur --> UC_GuestBooking
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE B — RÉSERVATIONS (MEMBRE)
+' ═══════════════════════════════════════════════════════════════════
+package "📅 Réservations" {
+  usecase "Choisir un espace\net une date" as UC_BookStep1
+  usecase "Choisir le mode\nde paiement" as UC_BookStep2
+  usecase "Confirmer la\nréservation" as UC_BookStep3
+  usecase "Consulter ses\nréservations" as UC_ViewBookings
+  usecase "Annuler une\nréservation" as UC_CancelBooking
+  usecase "Vérifier la\ndisponibilité" as UC_CheckAvail
+  usecase "Recevoir le QR\ncode d'accès" as UC_GetQR
+}
+
+Membre --> UC_BookStep1
+UC_BookStep1 ..> UC_CheckAvail : <<include>>
+UC_BookStep1 ..> UC_BookStep2 : <<include>>
+UC_BookStep2 ..> UC_BookStep3 : <<include>>
+UC_BookStep3 ..> UC_GetQR : <<include>>
+Membre --> UC_ViewBookings
+Membre --> UC_CancelBooking
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE B+ — SESSIONS CHECK-IN
+' ═══════════════════════════════════════════════════════════════════
+package "📲 Sessions & Check-in" {
+  usecase "Scanner le QR\ncode du membre" as UC_ScanQR
+  usecase "Démarrer une\nsession (check-in)" as UC_CheckIn
+  usecase "Terminer une\nsession (check-out)" as UC_CheckOut
+  usecase "Afficher le timer\ntemps réel" as UC_Timer
+  usecase "Détecter un\ndépassement horaire" as UC_Overtime
+  usecase "Clôturer\nauto. les sessions" as UC_AutoClose
+}
+
+Staff --> UC_ScanQR
+UC_ScanQR ..> UC_CheckIn : <<include>>
+Staff --> UC_CheckOut
+Membre --> UC_Timer
+Cron --> UC_Overtime
+Cron --> UC_AutoClose
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE A — ABONNEMENTS
+' ═══════════════════════════════════════════════════════════════════
+package "📋 Abonnements" {
+  usecase "Souscrire un\nabonnement" as UC_Subscribe
+  usecase "Consulter son\nabonnement actif" as UC_ViewSub
+  usecase "Renouveler son\nabonnement" as UC_RenewSub
+  usecase "Renouvellement\nautomatique (CRON)" as UC_AutoRenew
+  usecase "Activer/suspendre\nun abonnement" as UC_ManageSub
+  usecase "Appliquer un\ncode promo" as UC_PromoCode
+}
+
+Membre --> UC_Subscribe
+UC_Subscribe ..> UC_PromoCode : <<extend>>
+Membre --> UC_ViewSub
+Membre --> UC_RenewSub
+Cron --> UC_AutoRenew
+Admin --> UC_ManageSub
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE A — TARIFICATION
+' ═══════════════════════════════════════════════════════════════════
+package "💰 Tarification" {
+  usecase "Configurer la\ngrille tarifaire" as UC_SetPricing
+  usecase "Créer un code\npromo" as UC_CreatePromo
+  usecase "Désactiver un\ncode promo" as UC_DisablePromo
+  usecase "Consulter\nl'historique tarifaire" as UC_PricingHistory
+}
+
+Admin --> UC_SetPricing
+Admin --> UC_CreatePromo
+Admin --> UC_DisablePromo
+Admin --> UC_PricingHistory
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE C — PAIEMENTS
+' ═══════════════════════════════════════════════════════════════════
+package "💳 Paiements" {
+  usecase "Payer en ligne\n(Stripe)" as UC_PayOnline
+  usecase "Enregistrer un\npaiement sur place" as UC_PayOnsite
+  usecase "Consulter ses\nfactures" as UC_ViewInvoices
+  usecase "Télécharger un\nreçu PDF" as UC_DownloadPDF
+  usecase "Générer un\nreçu PDF" as UC_GeneratePDF
+  usecase "Rembourser un\npaiement" as UC_Refund
+  usecase "Relancer les\nimpayés (CRON)" as UC_PayReminder
+  usecase "Suspendre compte\nauto. impayé (CRON)" as UC_AutoSuspend
+  usecase "Vérifier paiement\nStripe (webhook)" as UC_StripeVerify
+}
+
+Membre --> UC_PayOnline
+Membre --> UC_ViewInvoices
+Membre --> UC_DownloadPDF
+UC_PayOnline ..> UC_StripeVerify : <<include>>
+UC_StripeVerify ..> UC_GeneratePDF : <<include>>
+Stripe --> UC_StripeVerify
+Staff --> UC_PayOnsite
+UC_PayOnsite ..> UC_GeneratePDF : <<include>>
+Admin --> UC_Refund
+Admin --> UC_ViewInvoices
+Cron --> UC_PayReminder
+Cron --> UC_AutoSuspend
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE B — GESTION ESPACES (ADMIN)
+' ═══════════════════════════════════════════════════════════════════
+package "🏢 Gestion des Espaces" {
+  usecase "Créer un espace" as UC_CreateSpace
+  usecase "Modifier un espace" as UC_EditSpace
+  usecase "Désactiver un espace" as UC_DeleteSpace
+  usecase "Consulter les\nespaces disponibles" as UC_ViewSpaces
+  usecase "Gérer les photos\nd'un espace" as UC_SpacePhotos
+}
+
+Admin --> UC_CreateSpace
+Admin --> UC_EditSpace
+Admin --> UC_DeleteSpace
+Admin --> UC_SpacePhotos
+Membre --> UC_ViewSpaces
+Visiteur --> UC_ViewSpaces
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE — GESTION MEMBRES (ADMIN)
+' ═══════════════════════════════════════════════════════════════════
+package "👥 Gestion des Membres" {
+  usecase "Consulter la\nliste des membres" as UC_ListMembers
+  usecase "Voir le profil\nd'un membre" as UC_ViewMemberProfile
+  usecase "Activer / Suspendre\nun compte membre" as UC_ToggleMember
+  usecase "Approuver un\nnouveau compte admin" as UC_ApproveMember
+  usecase "Supprimer un\ncompte membre" as UC_DeleteMember
+  usecase "Modifier son\nprofil personnel" as UC_EditProfile
+}
+
+Admin --> UC_ListMembers
+Admin --> UC_ViewMemberProfile
+Admin --> UC_ToggleMember
+Admin --> UC_DeleteMember
+Membre --> UC_EditProfile
+Staff --> UC_ListMembers
+Staff --> UC_ViewMemberProfile
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE G — FORMATIONS
+' ═══════════════════════════════════════════════════════════════════
+package "🎓 Formations & Workshops" {
+  usecase "Créer une formation" as UC_CreateFormation
+  usecase "Modifier une formation" as UC_EditFormation
+  usecase "Annuler une formation" as UC_CancelFormation
+  usecase "Gérer les inscriptions\nd'une formation" as UC_ManageInscriptions
+  usecase "S'inscrire à\nune formation" as UC_RegisterFormation
+  usecase "Se désinscrire\nd'une formation" as UC_UnregisterFormation
+  usecase "Consulter le catalogue\ndes formations" as UC_BrowseFormations
+  usecase "Valider / Rejeter\nune formation" as UC_ValidateFormation
+  usecase "Gérer les\nrémunérations formateurs" as UC_ManageRemunerations
+  usecase "Consulter ses\nrémunérations" as UC_ViewRemunerations
+  usecase "Rappel formation\nJ-1 (CRON)" as UC_FormationReminder
+}
+
+Formateur --> UC_CreateFormation
+Formateur --> UC_EditFormation
+Formateur --> UC_CancelFormation
+Formateur --> UC_ManageInscriptions
+Formateur --> UC_ViewRemunerations
+Membre --> UC_RegisterFormation
+Membre --> UC_UnregisterFormation
+Membre --> UC_BrowseFormations
+Admin --> UC_ValidateFormation
+Admin --> UC_ManageRemunerations
+Admin --> UC_BrowseFormations
+Cron --> UC_FormationReminder
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE E — MESSAGERIE TEMPS RÉEL
+' ═══════════════════════════════════════════════════════════════════
+package "💬 Messagerie Temps Réel" {
+  usecase "Démarrer une\nconversation" as UC_StartConv
+  usecase "Envoyer un message" as UC_SendMessage
+  usecase "Lire ses messages" as UC_ReadMessages
+  usecase "Voir les messages\nnon lus" as UC_UnreadCount
+  usecase "Gérer toutes les\nconversations" as UC_ManageConvs
+}
+
+Membre --> UC_StartConv
+Membre --> UC_SendMessage
+Membre --> UC_ReadMessages
+Membre --> UC_UnreadCount
+Admin --> UC_ManageConvs
+Admin --> UC_SendMessage
+Staff --> UC_ManageConvs
+Staff --> UC_SendMessage
+Formateur --> UC_StartConv
+Formateur --> UC_SendMessage
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE F — NOTIFICATIONS
+' ═══════════════════════════════════════════════════════════════════
+package "🔔 Notifications" {
+  usecase "Recevoir une notification\ndashboard (temps réel)" as UC_DashNotif
+  usecase "Recevoir un email\ntransactionnel" as UC_EmailNotif
+  usecase "Recevoir une notification\nWhatsApp" as UC_WANotif
+  usecase "Marquer comme lu" as UC_MarkRead
+  usecase "Configurer ses préférences\nde notification" as UC_NotifPrefs
+}
+
+Membre --> UC_DashNotif
+Membre --> UC_MarkRead
+Membre --> UC_NotifPrefs
+Email --> UC_EmailNotif
+WhatsApp --> UC_WANotif
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE J — POLITIQUE D'ANNULATION
+' ═══════════════════════════════════════════════════════════════════
+package "⚠️ Politique d'Annulation" {
+  usecase "Configurer la politique\nd'annulation globale" as UC_SetCancelPolicy
+  usecase "Configurer la politique\npar type d'espace" as UC_SetCancelBySpace
+  usecase "Appliquer une pénalité\nd'annulation" as UC_ApplyPenalty
+  usecase "Générer un crédit\nportefeuille" as UC_WalletCredit
+  usecase "Consulter ses crédits\nportefeuille" as UC_ViewCredits
+}
+
+Admin --> UC_SetCancelPolicy
+Admin --> UC_SetCancelBySpace
+UC_CancelBooking ..> UC_ApplyPenalty : <<include>>
+UC_ApplyPenalty ..> UC_WalletCredit : <<extend>>
+Membre --> UC_ViewCredits
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE K — DOCUMENTS
+' ═══════════════════════════════════════════════════════════════════
+package "📄 Documents" {
+  usecase "Consulter ses\ndocuments" as UC_ViewDocs
+  usecase "Signer un document\nélectroniquement" as UC_SignDoc
+  usecase "Télécharger un\ndocument" as UC_DownloadDoc
+  usecase "Gérer les modèles\nde documents" as UC_ManageDocTemplates
+  usecase "Signer un document\n(lien public)" as UC_SignPublicDoc
+}
+
+Membre --> UC_ViewDocs
+Membre --> UC_SignDoc
+Membre --> UC_DownloadDoc
+Admin --> UC_ManageDocTemplates
+Visiteur --> UC_SignPublicDoc
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE L — RGPD
+' ═══════════════════════════════════════════════════════════════════
+package "🛡️ RGPD" {
+  usecase "Demander l'export\nde ses données" as UC_GDPRExport
+  usecase "Demander la suppression\nde son compte" as UC_GDPRDelete
+  usecase "Demander la rectification\nde ses données" as UC_GDPRRectify
+  usecase "Traiter une demande\nRGPD" as UC_GDPRHandle
+}
+
+Membre --> UC_GDPRExport
+Membre --> UC_GDPRDelete
+Membre --> UC_GDPRRectify
+Admin --> UC_GDPRHandle
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE N — MULTI-SITES
+' ═══════════════════════════════════════════════════════════════════
+package "🗺️ Multi-Sites" {
+  usecase "Créer un site /\nantenne" as UC_CreateSite
+  usecase "Gérer l'accès\nd'un membre à un site" as UC_MemberSiteAccess
+  usecase "Consulter ses\nsites accessibles" as UC_ViewSites
+}
+
+Admin --> UC_CreateSite
+Admin --> UC_MemberSiteAccess
+Membre --> UC_ViewSites
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE ADMIN — TABLEAU DE BORD & KPIs
+' ═══════════════════════════════════════════════════════════════════
+package "📊 Tableau de Bord Admin & KPIs" {
+  usecase "Consulter les KPIs\n(CA, taux d'occupation...)" as UC_ViewKPIs
+  usecase "Visualiser les\ngraphiques d'activité" as UC_ViewCharts
+  usecase "Générer un rapport\nintelligent automatique" as UC_AutoReport
+  usecase "Consulter l'agenda\ndu jour" as UC_ViewAgenda
+  usecase "Gérer le profil\ndu coworking" as UC_EditCoworkingProfile
+  usecase "Onboarding guidé\ndu coworking" as UC_Onboarding
+  usecase "Exporter les données\n(Excel)" as UC_ExportExcel
+}
+
+Admin --> UC_ViewKPIs
+Admin --> UC_ViewCharts
+Admin --> UC_AutoReport
+Admin --> UC_ViewAgenda
+Admin --> UC_EditCoworkingProfile
+Admin --> UC_Onboarding
+Admin --> UC_ExportExcel
+Staff --> UC_ViewAgenda
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE ADMIN — GESTION RÉSERVATIONS (côté admin)
+' ═══════════════════════════════════════════════════════════════════
+package "🗓️ Gestion Réservations (Admin)" {
+  usecase "Confirmer une\nréservation" as UC_ConfirmBooking
+  usecase "Refuser une\nréservation" as UC_RejectBooking
+  usecase "Consulter toutes\nles réservations" as UC_ViewAllBookings
+  usecase "Créer une réservation\npour un membre" as UC_AdminCreateBooking
+}
+
+Admin --> UC_ConfirmBooking
+Admin --> UC_RejectBooking
+Admin --> UC_ViewAllBookings
+Admin --> UC_AdminCreateBooking
+Staff --> UC_ConfirmBooking
+Staff --> UC_RejectBooking
+Staff --> UC_ViewAllBookings
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE FORMATEUR — ESPACE FORMATEUR
+' ═══════════════════════════════════════════════════════════════════
+package "🧑‍🏫 Espace Formateur" {
+  usecase "Consulter son\nplanning" as UC_TrainerPlanning
+  usecase "Modifier son\nprofil formateur" as UC_EditTrainerProfile
+  usecase "Consulter ses\ncoworkings partenaires" as UC_ViewPartnerCoworkings
+  usecase "Tableau de bord\nformateur" as UC_TrainerDashboard
+}
+
+Formateur --> UC_TrainerPlanning
+Formateur --> UC_EditTrainerProfile
+Formateur --> UC_ViewPartnerCoworkings
+Formateur --> UC_TrainerDashboard
+
+' ═══════════════════════════════════════════════════════════════════
+' MODULE SUPER ADMIN — SUPERVISION GLOBALE
+' ═══════════════════════════════════════════════════════════════════
+package "👑 Super Admin — Supervision Globale" {
+  usecase "Créer un tenant\n(coworking)" as UC_CreateTenant
+  usecase "Modifier / Suspendre\nun tenant" as UC_ManageTenant
+  usecase "Consulter tous\nles tenants" as UC_ListTenants
+  usecase "Approuver un compte\nadmin coworking" as UC_ApproveAdmin
+  usecase "Gérer tous\nles utilisateurs" as UC_ManageAllUsers
+  usecase "Consulter les réservations\nglobales (tous tenants)" as UC_GlobalBookings
+  usecase "Consulter les paiements\nglobaux" as UC_GlobalPayments
+  usecase "Consulter les formations\nglobales" as UC_GlobalFormations
+  usecase "Consulter les espaces\nglobaux" as UC_GlobalSpaces
+  usecase "Gérer la facturation\nB2B (MRR)" as UC_B2BBilling
+  usecase "Consulter les KPIs\nde la plateforme" as UC_PlatformKPIs
+  usecase "Générer le rapport\nglobal automatique" as UC_GlobalReport
+  usecase "Consulter l'audit\nlog des actions" as UC_AuditLog
+  usecase "Traiter les demandes\nde contact" as UC_HandleContacts
+  usecase "Consulter le monitoring\nde la plateforme" as UC_Monitoring
+}
+
+SuperAdmin --> UC_CreateTenant
+SuperAdmin --> UC_ManageTenant
+SuperAdmin --> UC_ListTenants
+SuperAdmin --> UC_ApproveAdmin
+SuperAdmin --> UC_ManageAllUsers
+SuperAdmin --> UC_GlobalBookings
+SuperAdmin --> UC_GlobalPayments
+SuperAdmin --> UC_GlobalFormations
+SuperAdmin --> UC_GlobalSpaces
+SuperAdmin --> UC_B2BBilling
+SuperAdmin --> UC_PlatformKPIs
+SuperAdmin --> UC_GlobalReport
+SuperAdmin --> UC_AuditLog
+SuperAdmin --> UC_HandleContacts
+SuperAdmin --> UC_Monitoring
+
+' ═══════════════════════════════════════════════════════════════════
+' HÉRITAGE DES ACTEURS
+' ═══════════════════════════════════════════════════════════════════
+Membre --|> Visiteur
+Staff --|> Membre
+Admin --|> Staff
+Formateur --|> Membre
+
+@enduml

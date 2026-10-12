@@ -1,0 +1,119 @@
+@startuml
+skinparam classBackgroundColor #F0FFF0
+skinparam classBorderColor #2E7D32
+skinparam classHeaderBackgroundColor #2E7D32
+skinparam classHeaderFontColor #FFFFFF
+skinparam ArrowColor #333333
+skinparam linetype ortho
+
+title Diagramme de Classes - Partie 2 : Espaces, Reservations, Sessions, Annulation
+
+class "espaces" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  site_id : UUID <<FK sites>>
+  nom : TEXT
+  type : TEXT
+  capacite : INTEGER
+  tarif_horaire : NUMERIC(10,2)
+  photo_url : TEXT
+  photos_urls : TEXT[]
+  created_at : TIMESTAMPTZ
+}
+
+class "reservations" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  user_id : UUID <<FK profiles>>
+  guest_id : UUID <<FK guests>>
+  espace_id : UUID <<FK espaces>>
+  site_id : UUID <<FK sites>>
+  date_debut : TIMESTAMPTZ
+  date_fin : TIMESTAMPTZ
+  statut : TEXT
+  mode : TEXT
+  no_show : BOOLEAN
+  penalite_pct : NUMERIC(5,2)
+  credit_id : UUID <<FK credits_membres>>
+  created_at : TIMESTAMPTZ
+}
+
+class "sessions" {
+  +id : UUID <<PK>>
+  --
+  reservation_id : UUID <<FK reservations, UNIQUE>>
+  check_in : TIMESTAMPTZ
+  check_out : TIMESTAMPTZ
+  statut : TEXT
+  temps_restant : INTEGER
+  created_at : TIMESTAMPTZ
+}
+
+class "politique_annulation" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  delai_heures : INTEGER
+  penalite_pct : NUMERIC(5,2)
+  annulation_membre_autorisee : BOOLEAN
+  remboursement_auto : BOOLEAN
+  message_membre : TEXT
+  updated_at : TIMESTAMPTZ
+}
+
+class "politique_annulation_espaces" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  type_espace : TEXT
+  tranche_libre_heures : INTEGER
+  tranche_tardive_heures : INTEGER
+  penalite_tardive_pct : NUMERIC(5,2)
+  penalite_tres_tardive_pct : NUMERIC(5,2)
+  penalite_noshow_pct : NUMERIC(5,2)
+  noshow_note_profil : BOOLEAN
+  credit_portefeuille_auto : BOOLEAN
+  credit_portefeuille_pct : NUMERIC(5,2)
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "credits_membres" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  user_id : UUID <<FK profiles>>
+  montant : NUMERIC(10,2)
+  motif : TEXT
+  reservation_id : UUID <<FK reservations>>
+  expire_at : TIMESTAMPTZ
+  utilise : BOOLEAN
+  created_at : TIMESTAMPTZ
+}
+
+' ── RELATIONS ─────────────────────────────────
+espaces "1" --> "0..*" reservations : espace_id
+reservations "1" --> "0..1" sessions : reservation_id
+credits_membres "0..1" --> "0..*" reservations : credit_id
+
+note right of espaces
+  type : open_space | private_office |
+         meeting_room | training_room |
+         event_space
+end note
+
+note right of reservations
+  statut : pending | confirmed |
+           cancelled | completed | no_show
+  mode : online | on_site | phone
+end note
+
+note right of sessions
+  statut : scheduled | active |
+           completed | overtime | no_show
+  Trigger : check_reservation_overlap
+end note
+
+@enduml

@@ -1,0 +1,266 @@
+@startuml
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam usecaseBackgroundColor #F8F9FF
+skinparam usecaseBorderColor #4455AA
+skinparam actorBackgroundColor #D6EAF8
+skinparam actorBorderColor #1A5276
+skinparam usecase {
+  BackgroundColor<<auto>> #FFFACD
+  BorderColor<<auto>> #C9A800
+}
+left to right direction
+
+title DeskyWork - Partie 3 : Admin KPIs, Espaces, Documents, RGPD, Multi-Sites, Super Admin
+
+' ─── ACTEURS (humains uniquement) ──────────────
+' Visiteur = non connecte (guest public)
+actor "Visiteur"    as V
+actor "Membre"      as M
+actor "Staff"       as S
+actor "Admin"       as A
+actor "Super Admin" as SA
+
+M --|> V
+S --|> M
+A --|> S
+
+' ─── TABLEAU DE BORD ADMIN & KPIs ──────────────
+' kpis.routes.js | kpisController.js | reportController.js
+' AdminDashboard.jsx | AdminAgenda.jsx
+package "Tableau de Bord Admin et KPIs" {
+  usecase "Consulter KPIs (CA, occupation)" as K1
+  usecase "Voir graphique evolution CA"      as K2
+  usecase "Generer rapport intelligent"      as K3
+  usecase "Consulter agenda du jour"         as K4
+  usecase "Exporter donnees Excel"           as K5
+}
+
+A --> K1
+A --> K2
+A --> K3
+A --> K4
+A --> K5
+S --> K4
+
+' ─── GESTION ESPACES ───────────────────────────
+' espaces.routes.js | espacesController.js
+' AdminEspaces.jsx
+package "Gestion des Espaces" {
+  usecase "Lister les espaces"               as E1
+  usecase "Creer un espace"                  as E2
+  usecase "Modifier un espace"               as E3
+  usecase "Supprimer un espace"              as E4
+  usecase "Uploader photo d'un espace"       as E5
+  usecase "Lister espaces de formation"      as E6
+}
+
+A --> E2
+A --> E3
+A --> E4
+A --> E5
+M --> E1
+M --> E6
+V --> E1
+
+' ─── GESTION MEMBRES ───────────────────────────
+' members.routes.js | membersController.js
+' admin.routes.js | adminController.js
+package "Gestion des Membres" {
+  usecase "Lister les membres du tenant"     as MB1
+  usecase "Voir profil d'un membre"          as MB2
+  usecase "Activer ou suspendre un compte"   as MB3
+  usecase "Approuver compte en attente"      as MB4
+  usecase "Modifier un membre"               as MB5
+  usecase "Modifier son propre profil"       as MB6
+  usecase "Envoyer email de bienvenue"       as MB7
+  usecase "Obtenir son QR code"              as MB8
+}
+
+A --> MB1
+A --> MB2
+A --> MB3
+A --> MB4
+A --> MB5
+M --> MB6
+M --> MB7
+M --> MB8
+S --> MB1
+S --> MB2
+
+' ─── PROFIL COWORKING & ONBOARDING ────────────
+' espaces.routes.js | admin.routes.js
+' AdminCoworkingProfile.jsx | AdminOnboarding.jsx
+package "Profil Coworking et Onboarding" {
+  usecase "Consulter profil du tenant"       as CP1
+  usecase "Modifier profil du coworking"     as CP2
+  usecase "Completer onboarding guide"       as CP3
+  usecase "Uploader logo et photos"          as CP4
+  usecase "Voir liste des coworkings"        as CP5
+}
+
+A --> CP1
+A --> CP2
+A --> CP3
+A --> CP4
+M --> CP5
+V --> CP5
+
+' ─── POLITIQUE ANNULATION & CREDITS ───────────
+' modulesHJKLN.js (Module J)
+' sessions.routes.js (politique globale)
+' AdminCancellationPolicy.jsx
+package "Politique Annulation et Credits" {
+  usecase "Configurer politique globale"     as AC1
+  usecase "Configurer politique par espace"  as AC2
+  usecase "Marquer no-show"                  as AC3
+  usecase "Consulter ses credits"            as AC4
+  usecase "Ajouter credit portefeuille"      as AC5
+}
+
+A --> AC1
+A --> AC2
+A --> AC3
+A --> AC5
+M --> AC4
+AC3 ..> AC5 : <<extend>>
+
+' ─── MODULE H : GUESTS ─────────────────────────
+' modulesHJKLN.js (Module H)
+' GuestBookingPage.jsx
+package "Visiteurs Invites (Module H)" {
+  usecase "Reserver sans compte (guest)"     as H1
+  usecase "S'inscrire formation sans compte" as H2
+  usecase "Annuler reservation via token"    as H3
+  usecase "Lister les guests"                as H4
+  usecase "Convertir guest en membre"        as H5
+}
+
+V --> H1
+V --> H2
+V --> H3
+A --> H4
+A --> H5
+
+' ─── MODULE K : DOCUMENTS ──────────────────────
+' modulesHJKLN.js (Module K)
+' MemberDocuments.jsx | SignDocumentPage.jsx
+package "Documents (Module K)" {
+  usecase "Consulter ses documents"          as D1
+  usecase "Uploader un document"             as D2
+  usecase "Accepter reglement interieur"     as D3
+  usecase "Signer document via lien public"  as D4
+  usecase "Voir documents d'un membre"       as D5
+  usecase "Envoyer lien de signature"        as D6
+  usecase "Gerer modeles de documents"       as D7
+}
+
+M --> D1
+M --> D2
+M --> D3
+V --> D4
+A --> D5
+A --> D6
+A --> D7
+
+' ─── MODULE L : RGPD ───────────────────────────
+' modulesHJKLN.js (Module L)
+' MemberRGPD.jsx
+package "RGPD (Module L)" {
+  usecase "Demander export de ses donnees"   as RG1
+  usecase "Demander suppression du compte"   as RG2
+  usecase "Demander rectification"           as RG3
+  usecase "Opposition marketing"             as RG4
+  usecase "Demander portabilite des donnees" as RG5
+  usecase "Voir ses demandes RGPD"           as RG6
+  usecase "Traiter demande RGPD"             as RG7
+  usecase "Mettre a jour preferences mktg"   as RG8
+}
+
+M --> RG1
+M --> RG2
+M --> RG3
+M --> RG4
+M --> RG5
+M --> RG6
+M --> RG8
+A --> RG7
+
+' ─── MODULE N : MULTI-SITES ────────────────────
+' modulesHJKLN.js (Module N)
+' AdminMultiSites.jsx
+package "Multi-Sites (Module N)" {
+  usecase "Lister les sites"                 as NS1
+  usecase "Creer un site / antenne"          as NS2
+  usecase "Modifier un site"                 as NS3
+  usecase "Supprimer un site"                as NS4
+  usecase "Voir membres d'un site"           as NS5
+  usecase "Autoriser membre sur un site"     as NS6
+  usecase "Retirer acces d'un membre"        as NS7
+  usecase "KPIs d'un site"                   as NS8
+  usecase "KPIs globaux multi-sites"         as NS9
+}
+
+A --> NS1
+A --> NS2
+A --> NS3
+A --> NS4
+A --> NS5
+A --> NS6
+A --> NS7
+A --> NS8
+A --> NS9
+M --> NS1
+
+' ─── SUPER ADMIN ───────────────────────────────
+' superAdmin.routes.js | superAdminController.js
+' SuperAdminDashboard.jsx | TenantManagement.jsx
+' TenantBilling.jsx | SuperAdminMonitoring.jsx
+package "Super Admin - Supervision Globale" {
+  usecase "Lister tous les tenants"          as SA1
+  usecase "Voir detail d'un tenant"          as SA2
+  usecase "Creer un tenant"                  as SA3
+  usecase "Modifier un tenant"               as SA4
+  usecase "Supprimer un tenant"              as SA5
+  usecase "Onboarder un tenant"              as SA6
+  usecase "Voir stats globales"              as SA7
+  usecase "Voir audit log"                   as SA8
+  usecase "Lister tous les utilisateurs"     as SA9
+  usecase "Voir resume des roles"            as SA10
+  usecase "Modifier un utilisateur"          as SA11
+  usecase "Supprimer un utilisateur"         as SA12
+  usecase "Voir reservations globales"       as SA13
+  usecase "Annuler reservation (global)"     as SA14
+  usecase "Voir paiements globaux"           as SA15
+  usecase "Voir formations globales"         as SA16
+  usecase "Annuler formation (global)"       as SA17
+  usecase "Voir espaces globaux"             as SA18
+  usecase "Activer/desactiver espace"        as SA19
+  usecase "Rapport intelligent global"       as SA20
+  usecase "Traiter contacts landing page"    as SA21
+}
+
+SA --> SA1
+SA --> SA2
+SA --> SA3
+SA --> SA4
+SA --> SA5
+SA --> SA6
+SA --> SA7
+SA --> SA8
+SA --> SA9
+SA --> SA10
+SA --> SA11
+SA --> SA12
+SA --> SA13
+SA --> SA14
+SA --> SA15
+SA --> SA16
+SA --> SA17
+SA --> SA18
+SA --> SA19
+SA --> SA20
+SA --> SA21
+
+@enduml

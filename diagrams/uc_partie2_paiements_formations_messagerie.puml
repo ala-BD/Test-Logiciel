@@ -1,0 +1,133 @@
+@startuml UC_Partie2_Paiements_Formations_Messagerie
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #FEFEFE
+skinparam usecaseBorderColor #555555
+skinparam actorBackgroundColor #DDEEFF
+skinparam ArrowColor #444444
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #F9A825
+left to right direction
+
+title DeskyWork — Partie 2 : Paiements, Formations, Messagerie, Notifications
+
+actor "Membre" as M
+actor "Staff" as S
+actor "Admin" as A
+actor "Formateur" as F
+actor "<<system>>\nStripe" as STR
+actor "<<system>>\nEmail (SMTP)" as EML
+actor "<<system>>\nWhatsApp" as WA
+
+S --|> M
+A --|> S
+
+' ── PAIEMENTS ────────────────────────────────────
+package "Paiements" {
+  usecase "Payer en ligne (Stripe)" as P1
+  usecase "Enregistrer paiement sur place" as P2
+  usecase "Consulter ses factures" as P3
+  usecase "Télécharger reçu PDF" as P4
+  usecase "Générer reçu PDF (auto)" as P5
+  usecase "Rembourser un paiement" as P6
+  usecase "Relancer impayés" as P7
+  usecase "Suspendre compte impayé" as P8
+  usecase "Vérifier paiement Stripe" as P9
+}
+
+M --> P1
+M --> P3
+M --> P4
+P1 ..> P9 : <<include>>
+P9 ..> P5 : <<include>>
+STR --> P9
+S --> P2
+P2 ..> P5 : <<include>>
+A --> P6
+
+note bottom of P7
+  <<scheduled>>
+  J+3 · J+7 · J+15
+end note
+
+note bottom of P8
+  <<scheduled>>
+  Automatique à J+15
+end note
+
+' ── FORMATIONS ────────────────────────────────────
+package "Formations & Workshops" {
+  usecase "Créer une formation" as G1
+  usecase "Modifier / Annuler formation" as G2
+  usecase "Gérer inscriptions formation" as G3
+  usecase "Consulter catalogue formations" as G4
+  usecase "S'inscrire à une formation" as G5
+  usecase "Se désinscrire d'une formation" as G6
+  usecase "Valider / Rejeter une formation" as G7
+  usecase "Gérer rémunérations formateurs" as G8
+  usecase "Consulter ses rémunérations" as G9
+  usecase "Rappel formation J-1" as G10
+}
+
+F --> G1
+F --> G2
+F --> G3
+F --> G9
+M --> G4
+M --> G5
+M --> G6
+A --> G7
+A --> G8
+
+note bottom of G10
+  <<scheduled>>
+  Tous les jours à 18h00
+end note
+
+' ── ESPACE FORMATEUR ─────────────────────────────
+package "Espace Formateur" {
+  usecase "Tableau de bord formateur" as TR1
+  usecase "Consulter son planning" as TR2
+  usecase "Modifier profil formateur" as TR3
+  usecase "Voir coworkings partenaires" as TR4
+}
+
+F --> TR1
+F --> TR2
+F --> TR3
+F --> TR4
+
+' ── MESSAGERIE ────────────────────────────────────
+package "Messagerie Temps Réel (Socket.io)" {
+  usecase "Démarrer une conversation" as MS1
+  usecase "Envoyer un message" as MS2
+  usecase "Lire ses messages" as MS3
+  usecase "Voir messages non lus" as MS4
+  usecase "Gérer toutes les conversations" as MS5
+}
+
+M --> MS1
+M --> MS2
+M --> MS3
+M --> MS4
+A --> MS5
+A --> MS2
+F --> MS1
+F --> MS2
+
+' ── NOTIFICATIONS ─────────────────────────────────
+package "Notifications (Email + WhatsApp + Dashboard)" {
+  usecase "Recevoir notif. dashboard (temps réel)" as N1
+  usecase "Recevoir email transactionnel" as N2
+  usecase "Recevoir notification WhatsApp" as N3
+  usecase "Marquer notification comme lue" as N4
+  usecase "Configurer préférences notif." as N5
+}
+
+M --> N1
+M --> N4
+M --> N5
+EML --> N2
+WA --> N3
+
+@enduml

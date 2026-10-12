@@ -130,6 +130,7 @@ export default function TrainerDashboard({ session }) {
   };
 
   const refreshData = async (trainerId) => {
+    const id = trainerId || profile?.id || userId;
     try {
       const [fList, rList, eList, cwRes, remuRes] = await Promise.all([
         formationApi.getAll({ formateur_id: id }).catch(() => ({ formations: [] })),
@@ -191,7 +192,7 @@ export default function TrainerDashboard({ session }) {
         prix_inscription: 0, date_debut: '', date_fin: '', programme: '', prerequis: '', materiel: ''
       });
       setShowCreateFormation(false);
-      await refreshData();
+      await refreshData(profile?.id || userId);
     } catch (err) { setError(err.message); }
   };
 
@@ -210,7 +211,7 @@ export default function TrainerDashboard({ session }) {
       setBookingForm({ espace_id: '', date_debut: '', date_fin: '', mode: 'online' });
       setSelectedEspace(null);
       setShowBookingModal(false);
-      await refreshData();
+      await refreshData(profile?.id || userId);
     } catch (err) { setError(err.message); }
   };
 

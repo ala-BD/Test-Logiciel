@@ -1,0 +1,129 @@
+@startuml
+skinparam classBackgroundColor #F3E5F5
+skinparam classBorderColor #6A1B9A
+skinparam classHeaderBackgroundColor #6A1B9A
+skinparam classHeaderFontColor #FFFFFF
+skinparam ArrowColor #333333
+skinparam linetype ortho
+
+title Diagramme de Classes - Partie 5 : Guests, Documents, RGPD, Multi-Sites
+
+class "guests" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  nom : TEXT
+  prenom : TEXT
+  email : TEXT
+  telephone : TEXT
+  token : TEXT <<UNIQUE>>
+  converti_en_membre_id : UUID <<FK profiles>>
+  converti_at : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "documents_membres" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  user_id : UUID <<FK profiles>>
+  guest_id : UUID <<FK guests>>
+  type_doc : TEXT
+  nom : TEXT
+  url : TEXT
+  pdf_contenu : TEXT
+  signe : BOOLEAN
+  signe_at : TIMESTAMPTZ
+  signature_ip : TEXT
+  signature_token : TEXT
+  accepte : BOOLEAN
+  accepte_at : TIMESTAMPTZ
+  uploade_par : TEXT
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "contenu_documents" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  type_doc : TEXT
+  contenu : TEXT
+  version : TEXT
+  actif : BOOLEAN
+  created_at : TIMESTAMPTZ
+}
+
+class "rgpd_demandes" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  user_id : UUID <<FK profiles>>
+  type_demande : TEXT
+  statut : TEXT
+  details : TEXT
+  traite_par : UUID <<FK profiles>>
+  traite_at : TIMESTAMPTZ
+  export_url : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+class "sites" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  nom : TEXT
+  adresse : TEXT
+  ville : TEXT
+  telephone : TEXT
+  email : TEXT
+  actif : BOOLEAN
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class "membres_sites" {
+  +id : UUID <<PK>>
+  --
+  tenant_id : UUID <<FK tenants>>
+  user_id : UUID <<FK profiles>>
+  site_id : UUID <<FK sites>>
+  created_at : TIMESTAMPTZ
+}
+
+' ── RELATIONS ─────────────────────────────────
+guests "0..1" --> "0..*" documents_membres : guest_id
+sites "1" --> "0..*" membres_sites : site_id
+profiles "1" --> "0..*" membres_sites : user_id
+profiles "1" --> "0..*" rgpd_demandes : user_id
+
+note right of guests
+  Visiteur sans compte Supabase
+  token unique pour liens publics
+  Convertible en membre
+end note
+
+note right of documents_membres
+  type_doc : reglement_interieur |
+  politique_confidentialite |
+  contrat_abonnement | cin_passeport |
+  justificatif_etudiant |
+  convention_formateur | autre
+  user_id OU guest_id requis
+end note
+
+note right of rgpd_demandes
+  type_demande : export | suppression |
+  rectification | opposition_marketing |
+  portabilite
+  statut : en_attente | en_cours |
+           traite | refuse
+end note
+
+note right of membres_sites
+  UNIQUE (user_id, site_id)
+  Acces multi-sites par abonnement
+end note
+
+@enduml
